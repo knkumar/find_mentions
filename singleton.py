@@ -31,12 +31,22 @@ class mention_frame:
 
 # all checks returns 1 is true (include) 0 is false (exclude)
 def pos_rules_check(pos_tags):
-   pass
-
+   # input is a list of pos tags spanning the bracketing - add checks to include or exclude
+   # eg: ['NP','N','VP']
+   for pos_tag in pos_tags:
+      pass
+   return 1
 def word_rules_check(words):
-   pass
+   # input is a list of words - check which to include or exclude
+   # eg: ['the','man','is','blue']
+   for word in words:
+      pass
+   return 1
 
 def nps_rules_check(bracket_string):
+   # input is a bracket string 
+   # eg: (NP*(SBAR(S(S(VP*(NP*)))(VP*(VP*(ADJP(ADJP**)**(ADVP*)(ADJP(ADVP(NP**)*)*))))))))
+   # search for relevant features and return 0(exclude) or 1(include)
    pass
 
 def find_singletons(sent_dict):
