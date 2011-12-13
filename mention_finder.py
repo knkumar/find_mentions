@@ -84,13 +84,16 @@ def extract_features(sent_features, tokens):
    return sent_features
 
 def display_nps(sent_dict):
+   f = open("nps.txt","a")
    nps = sent_dict.get_nps()
-   print "+++++%s+++++"%(sent_dict.sent_number)
-   print sent_dict.get_sent_full()
+   f.write("\n+++++%s+++++\n"%(sent_dict.sent_number))
+   f.write(sent_dict.get_sent_full())
    for key in nps.keys():
       for np in nps[key]:
-         print np[0],np[1]
-         print ''.join(np[2])
+         f.write('\n%s|%s\t'%(np[0],np[1]))
+         f.write(''.join(np[2]))
+   f.write('\n')
+   f.close()
 
 #parse every sentence and add it to the object dict
 def parse_sentences(lines):
@@ -108,7 +111,9 @@ def parse_sentences(lines):
        else:
           co_ref = max(sent_features.keys())
           for key in sent_features.keys():
-             if key == 5:
+             if key < 5:
+                continue
+             elif key == 5:
                 ret_nps[5] = search_tag(''.join(sent_features[5]),"(NP","*")
              elif key == co_ref:
                 ret_nps[key] = search_tag(''.join(sent_features[key]),"(","-")
@@ -119,6 +124,33 @@ def parse_sentences(lines):
           sent_num += 1
           sent_features = {}
    return sent_dict
+
+def find_nice_features(sent_dict):
+   pos_cluster = []
+   neg_cluster = []
+   for key in sent_dict.keys():
+      nps = sent_dict[key].nps
+      print nps
+      print
+      continue
+      coref = max(nps.keys())
+      coref_spans = map(lambda x: '%s|%s'%(x[0],x[1]), nps[coref])
+      for npkey in nps.keys():
+         for np in nps[npkey]:
+            if npkey != coref:
+               if '%s|%s'%(np[0],np[1]) in coref_spans:
+                  pos_cluster.append('%s|%s\t%s'%(np[0],np[1],''.join(np[2])))
+               else:
+                  neg_cluster.append('%s|%s\t%s'%(np[0],np[1],''.join(np[2])))
+            else:
+               neg_cluster.append('%s|%s\t%s'%(np[0],np[1],''.join(np[2])))
+   return pos_cluster, neg_cluster
+
+def copy_back(cluster, fname):
+   f = open(fname, 'w')
+   for item in cluster:
+      f.write('%s\n'%item)
+   f.close()
           
 def main():
    #"""
@@ -126,7 +158,13 @@ def main():
    lines = iter(data.readlines())
    sent_features = ['','','']
    lines.next()
-   sent_dict = parse_sentences(lines)
+   sent_dict = parse_sentences(lines) # contains parses for all the sentences
+   for key in sent_dict.keys():
+      print sent_dict[key].nps
+   return
+   pos,neg = find_nice_features(sent_dict)
+   copy_back(pos,'pos.txt')
+   copy_back(neg,'neg.txt')
    """
    test = "(NP(NP**)**)(VP*(ADJP*(PP*(NP***))))*"
    ret_np = get_nps(test,"NP")
