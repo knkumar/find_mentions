@@ -36,13 +36,11 @@ def find_nice_features(sent_dict):
    for key in sent_dict.keys():
       nps = sent_dict[key].nps
       coref = max(nps.keys())
-      coref_spans = []
-      def insert_spans(span):
-         coref_spans.append(span)
-      if not nps[coref]:
-         map(lambda x: insert_spans('%s|%s'%(x[0],x[1])) if not x else None, nps[coref])
+      coref_spans = map(lambda x,y: '%s|%s'%(x,x+y), nps[coref][0],nps[coref][1])
       for npkey in nps.keys():
-         for np in nps[npkey]:
+         # key:[words, span, brackets]
+         np_list = map(lambda x,y,z: [x,x+y,z], nps[npkey][0],nps[npkey][1],nps[npkey][2])
+         for np in np_list:
             if not np:
                continue
             if npkey != coref:

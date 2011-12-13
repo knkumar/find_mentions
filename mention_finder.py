@@ -6,6 +6,7 @@
 Everest has become too common , and perhaps abit too commercial
 ','(NP*(SBAR(S(S(VP*(NP*)))(VP*(VP*(ADJP(ADJP**)**(ADVP*)(ADJP(ADVP(NP**)*)*))))))))',10]"""
 import re
+import pickle
 
 class mention_frame:
    def __init__(self, number, sent, pos, bracket, nps_finder):
@@ -16,11 +17,11 @@ class mention_frame:
       self.nps = nps_finder
 
    def get_nps(self):
-      ret_nps = {}
+      ret_np = {}
       def insert_nps(key, val):
-         ret_nps[key] = val
+         ret_np[key] = val
       map(lambda key: insert_nps(key,map(lambda x,y,z: [x,x+y,z], self.nps[key][0],self.nps[key][1],self.nps[key][2])), self.nps.keys())
-      return ret_nps
+      return ret_np
 
    def get_sent(self,start,end):
       return ' '.join(self.sent[start:end])
@@ -123,48 +124,21 @@ def parse_sentences(lines):
           display_nps(sent_dict[sent_num])
           sent_num += 1
           sent_features = {}
+          ret_nps={}
    return sent_dict
 
-def find_nice_features(sent_dict):
-   pos_cluster = []
-   neg_cluster = []
-   for key in sent_dict.keys():
-      nps = sent_dict[key].nps
-      print nps
-      print
-      continue
-      coref = max(nps.keys())
-      coref_spans = map(lambda x: '%s|%s'%(x[0],x[1]), nps[coref])
-      for npkey in nps.keys():
-         for np in nps[npkey]:
-            if npkey != coref:
-               if '%s|%s'%(np[0],np[1]) in coref_spans:
-                  pos_cluster.append('%s|%s\t%s'%(np[0],np[1],''.join(np[2])))
-               else:
-                  neg_cluster.append('%s|%s\t%s'%(np[0],np[1],''.join(np[2])))
-            else:
-               neg_cluster.append('%s|%s\t%s'%(np[0],np[1],''.join(np[2])))
-   return pos_cluster, neg_cluster
-
-def copy_back(cluster, fname):
-   f = open(fname, 'w')
-   for item in cluster:
-      f.write('%s\n'%item)
-   f.close()
           
 def main():
    #"""
    data = open("../conll_st_Data/train/en_train_dev_gold.txt")
+   sent_out = open("sent_dict.pkl","wb")
    lines = iter(data.readlines())
    sent_features = ['','','']
    lines.next()
    sent_dict = parse_sentences(lines) # contains parses for all the sentences
-   for key in sent_dict.keys():
-      print sent_dict[key].nps
-   return
-   pos,neg = find_nice_features(sent_dict)
-   copy_back(pos,'pos.txt')
-   copy_back(neg,'neg.txt')
+   pickle.dump(sent_dict,sent_out)
+   data.close()
+   sent_out.close()
    """
    test = "(NP(NP**)**)(VP*(ADJP*(PP*(NP***))))*"
    ret_np = get_nps(test,"NP")
