@@ -136,6 +136,7 @@ def main():
    sent_features = ['','','']
    lines.next()
    sent_dict = parse_sentences(lines) # contains parses for all the sentences
+   #sent_num : {column_no : [[words],[spans],[nps|args]]}
    pickle.dump(sent_dict,sent_out)
    data.close()
    sent_out.close()
