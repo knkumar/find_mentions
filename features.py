@@ -29,7 +29,33 @@ class mention_frame:
    def get_sent_full(self):
       return ' '.join(self.sent)
 
-def insert(cluster, key)
+def get_data(sent_dict,key):
+   nps = sent_dict[key].nps
+   coref = max(nps.keys())
+   sent = sent_dict[key].sent
+   coref_spans = map(lambda x,y: '%s|%s'%(x,x+y), nps[coref][0],nps[coref][1])
+   return nps, coref,sent, coref_spans
+
+
+def insert(cluster, key):
+   if key in cluster.keys():
+      cluster[key] = cluster[key]+1
+   else:
+      cluster[key] = 1
+   return cluster
+
+def make_classes(np_list, coref, coref_spans, npkey, pos_cluster, neg_cluster):
+   # np_list = [start,end,bracket_list]
+   for np in np_list:
+      if not np:
+         continue
+      if npkey != coref:
+         bracket = '%s'%(''.join(np[2])) # bracket string
+         if '%s|%s'%(np[0],np[1]) in coref_spans:
+            pos_cluster = insert(pos_cluster,bracket)
+         else:
+            neg_cluster = insert(neg_cluster,bracket)            
+   return pos_cluster,neg_cluster
 
 def find_nice_features(sent_dict):
    pos_cluster = {}
@@ -37,28 +63,17 @@ def find_nice_features(sent_dict):
    #named_entity = {}
    for key in sent_dict.keys():
       #cannot consider features to be independent
-      nps = sent_dict[key].nps
-      coref = max(nps.keys())
-      sent = sent_dict[key].sent
-      coref_spans = map(lambda x,y: '%s|%s'%(x,x+y), nps[coref][0],nps[coref][1])
+      nps,coref,sent,coref_spans = get_data(sent_dict,key)
       for npkey in nps.keys():
          # key:[words, span, brackets]
          np_list = map(lambda x,y,z: [x,x+y,z], nps[npkey][0],nps[npkey][1],nps[npkey][2])
-         for np in np_list:
-            if not np:
-               continue
-            if npkey != coref:
-               bracket = '%s'%(''.join(np[2]))
-               if '%s|%s'%(np[0],np[1]) in coref_spans:
-                  insert(pos_cluster,bracket)
-               else:
-                  insert(neg_cluster,bracket)            
+         pos_cluster, neg_cluster = make_classes(np_list, coref, coref_spans, npkey, pos_cluster,neg_cluster)
    return pos_cluster, neg_cluster
 
 def copy_back(cluster, fname):
    f = open(fname, 'w')
-   for item in cluster:
-      f.write('%s\n'%item)
+   for key in cluster.keys():
+      f.write('%s\t%s\n'%(key,cluster[key]))
    f.close()
           
 def main():

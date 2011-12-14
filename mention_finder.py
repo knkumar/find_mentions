@@ -132,7 +132,7 @@ def parse_sentences(lines):
           
 def main():
    #"""
-   data = open("../conll_st_Data/train/en_train_dev_gold.txt")
+   data = open("../conll_st_Data/train/en_train_dev_gold.txt","rb")
    sent_out = open("sent_dict.pkl","wb")
    lines = iter(data.readlines())
    sent_features = ['','','']
