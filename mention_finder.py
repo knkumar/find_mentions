@@ -77,6 +77,7 @@ def extract_features(sent_features, tokens):
    sent_features = insert_tokens(sent_features, tokens[3], 3)
    sent_features = insert_tokens(sent_features, tokens[4], 4)
    sent_features = insert_tokens(sent_features, tokens[5], 5)
+   sent_features = insert_tokens(sent_features, tokens[11], 11)
    if len(tokens) > 12:
       for i in range(12,len(tokens)-1):
          sent_features = insert_tokens(sent_features, tokens[i], i)
@@ -114,8 +115,9 @@ def parse_sentences(lines):
           for key in sent_features.keys():
              if key < 5:
                 continue
-             elif key == 5:
+             elif key == 5 || key == 11:
                 ret_nps[5] = search_tag(''.join(sent_features[5]),"(NP","*")
+                ret_nps[11] = search_tag(''.join(sent_features[11]),"(","*")
              elif key == co_ref:
                 ret_nps[key] = search_tag(''.join(sent_features[key]),"(","-")
              else:

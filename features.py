@@ -29,13 +29,17 @@ class mention_frame:
    def get_sent_full(self):
       return ' '.join(self.sent)
 
+def insert(cluster, key)
 
 def find_nice_features(sent_dict):
-   pos_cluster = []
-   neg_cluster = []
+   pos_cluster = {}
+   neg_cluster = {}
+   #named_entity = {}
    for key in sent_dict.keys():
+      #cannot consider features to be independent
       nps = sent_dict[key].nps
       coref = max(nps.keys())
+      sent = sent_dict[key].sent
       coref_spans = map(lambda x,y: '%s|%s'%(x,x+y), nps[coref][0],nps[coref][1])
       for npkey in nps.keys():
          # key:[words, span, brackets]
@@ -46,9 +50,9 @@ def find_nice_features(sent_dict):
             if npkey != coref:
                bracket = '%s'%(''.join(np[2]))
                if '%s|%s'%(np[0],np[1]) in coref_spans:
-                  pos_cluster.append(bracket)
+                  insert(pos_cluster,bracket)
                else:
-                  neg_cluster.append(bracket)            
+                  insert(neg_cluster,bracket)            
    return pos_cluster, neg_cluster
 
 def copy_back(cluster, fname):
