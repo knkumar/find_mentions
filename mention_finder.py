@@ -116,7 +116,8 @@ def parse_sentences(lines):
              if key < 5:
                 continue
              elif key == 5 || key == 11:
-                ret_nps[5] = search_tag(''.join(sent_features[5]),"(NP","*")
+                ret_nps['np'] = search_tag(''.join(sent_features[5]),"(NP","*")
+                ret_nps['prn'] = search_tag(''.join(sent_features[5]),"(PRN","*")
                 ret_nps[11] = search_tag(''.join(sent_features[11]),"(","*")
              elif key == co_ref:
                 ret_nps[key] = search_tag(''.join(sent_features[key]),"(","-")

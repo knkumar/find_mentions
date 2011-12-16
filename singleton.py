@@ -36,6 +36,7 @@ def pos_rules_check(pos_tags):
    for pos_tag in pos_tags:
       pass
    return 1
+
 def word_rules_check(words):
    # input is a list of words - check which to include or exclude
    # eg: ['the','man','is','blue']
@@ -43,12 +44,15 @@ def word_rules_check(words):
       pass
    return 1
 
-def nps_rules_check(bracket_string):
+def nps_rules_check(bracket_string,prn):
    # input is a bracket string 
    # eg: (NP*(SBAR(S(S(VP*(NP*)))(VP*(VP*(ADJP(ADJP**)**(ADVP*)(ADJP(ADVP(NP**)*)*))))))))
    # search for relevant features and return 0(exclude) or 1(include)
-   pass
-
+   argm_dis = re.find_iter('ARGM-DIS',bracket_string)
+   prn = re.finditer('PRN',bracket_string)
+   if bracket_string.find('(ADVP**)') != -1 or bracket_string.find('(VP (PP*(NP**))'):
+      pass
+                        
 def find_singletons(sent_dict):
    pos_cluster = []
    neg_cluster = []
@@ -62,8 +66,9 @@ def find_singletons(sent_dict):
          # key:[words, span, brackets]
          np_list = map(lambda x,y,z: [x,x+y,z], nps[npkey][0],nps[npkey][1],nps[npkey][2])
          for np in np_list:
-            bracket = '%s'%(''.join(np[2]))
-            if pos_rules_check(pos[np[0]:np[1]]) or word_rules_check(sent[np[0]:np[1]]) or nps_rules_check(bracket):
+            bracket = ''.join(np['np'])
+            prn = ''.join(np['prn'])
+            if pos_rules_check(pos[np[0]:np[1]]) or word_rules_check(sent[np[0]:np[1]]) or nps_rules_check(bracket,prn):
                if '%s|%s'%(np[0],np[1]) in coref_spans:
                   neg_cluster.append(bracket)           
                else:

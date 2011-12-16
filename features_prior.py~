@@ -44,33 +44,27 @@ def insert(cluster, key):
       cluster[key] = 1
    return cluster
 
-def make_classes(np_list, coref, coref_spans, npkey, pos_cluster, neg_cluster):
+def make_classes(np_list, coref, coref_spans, npkey, prior_cluster):
    # np_list = [start,end,bracket_list]
    for np in np_list:
       if not np:
          continue
       if npkey != coref:
          bracket = '%s'%(''.join(np[2])) # bracket string
-         if '%s|%s'%(np[0],np[1]) in coref_spans:
-            pos_cluster = insert(pos_cluster,bracket)
-         else:
-            neg_cluster = insert(neg_cluster,bracket)            
-   return pos_cluster,neg_cluster
+         prior_cluster = insert(prior_cluster,bracket)
+   return prior_cluster
 
 def find_nice_features(sent_dict):
-   pos_cluster = {}
-   neg_cluster = {}
+   prior_cluster = {}
    #named_entity = {}
    for key in sent_dict.keys():
       #cannot consider features to be independent
       nps,coref,sent,coref_spans = get_data(sent_dict,key)
       for npkey in nps.keys():
-         if npkey == "PRN":
-            continue
          # key:[words, span, brackets]
          np_list = map(lambda x,y,z: [x,x+y,z], nps[npkey][0],nps[npkey][1],nps[npkey][2])
-         pos_cluster, neg_cluster = make_classes(np_list, coref, coref_spans, npkey, pos_cluster,neg_cluster)
-   return pos_cluster, neg_cluster
+         prior_cluster = make_classes(np_list, coref, coref_spans, npkey, prior_cluster)
+   return prior_cluster
 
 def copy_back(cluster, fname):
    f = open(fname, 'w')
@@ -83,9 +77,8 @@ def main():
    sent_out = open("sent_dict.pkl","rb")
    sent_dict = pickle.load(sent_out)
    print sent_dict[sent_dict.keys()[100]].nps
-   pos,neg = find_nice_features(sent_dict)
-   copy_back(pos,'pos.txt')
-   copy_back(neg,'neg.txt')
+   prior = find_nice_features(sent_dict)
+   copy_back(prior,'prior.txt')
 
 if __name__ == "__main__":
    main()
