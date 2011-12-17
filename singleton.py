@@ -7,6 +7,7 @@ Everest has become too common , and perhaps abit too commercial
 ','(NP*(SBAR(S(S(VP*(NP*)))(VP*(VP*(ADJP(ADJP**)**(ADVP*)(ADJP(ADVP(NP**)*)*))))))))',10]"""
 import re
 import pickle
+import types
 
 class mention_frame:
    def __init__(self, number, sent, pos, bracket, nps_finder):
@@ -29,66 +30,143 @@ class mention_frame:
    def get_sent_full(self):
       return ' '.join(self.sent)
 
-# all checks returns 1 is true (include) 0 is false (exclude)
-def pos_rules_check(pos_tags):
-   # input is a list of pos tags spanning the bracketing - add checks to include or exclude
-   # eg: ['NP','N','VP']
-   for pos_tag in pos_tags:
-      pass
-   return 1
+def find_index(string, tag):
+   try:
+      ind = string.index(tag)
+   except:
+      return None
+   return ['%s|%s'%(ind,ind+1)]
 
-def word_rules_check(words):
-   # input is a list of words - check which to include or exclude
-   # eg: ['the','man','is','blue']
-   for word in words:
-      pass
-   return 1
+def find_single_spans(nps, tag):
+   spans = []
+   np_list = map(lambda x,y,z: [x,x+y,z], nps[0],nps[1],nps[2])
+   for np_item in np_list:
+      m = re.match(tag,np_item[2])
+      if not m or m.span()[0] == -1:
+         continue
+      spans.append('%s|%s'%(np_item[0],np_item[1]))
+   return spans
 
-def nps_rules_check(bracket_string,prn):
-   # input is a bracket string 
-   # eg: (NP*(SBAR(S(S(VP*(NP*)))(VP*(VP*(ADJP(ADJP**)**(ADVP*)(ADJP(ADVP(NP**)*)*))))))))
-   # search for relevant features and return 0(exclude) or 1(include)
-   argm_dis = re.find_iter('ARGM-DIS',bracket_string)
-   prn = re.finditer('PRN',bracket_string)
-   if bracket_string.find('(ADVP**)') != -1 or bracket_string.find('(VP (PP*(NP**))'):
-      pass
+def find_spans(nps,tag):
+   spans = [] # [[start,end]...]
+   for npkey in nps.keys():
+       np_list = map(lambda x,y,z: [x,x+y,z], nps[npkey][0],nps[npkey][1],nps[npkey][2])
+       for np_item in np_list:
+          m = re.match(tag,np_item[2])
+          if not m or m.span()[0] == -1:
+             continue
+          spans.append('%s|%s'%(np_item[0],np_item[1]))
+   return spans
+
+def make_union(arg_list):
+   return reduce(lambda a,b:a|b ,map(lambda x: set(x), arg_list))
+
+def make_intersection(arg_list):
+   return reduce(lambda a,b: a&b , map(lambda x: set(x), arg_list))
+
+def check_in_span(span1,span2):
+   #return true if span1 in span2
+   start = span1[0]
+   end = span1[1]
+   for span in span2:
+      if span[0] <= start and span[1] >= end:
+         return True
+   return False
+      
+def remove_spans(pos,neg,in_out,cc=False):
+   #input : ["start|end"...]
+   bucket_pos = []
+   pos_list = map(lambda x: x.split('|'), pos)
+   neg_list = map(lambda x: x.split('|'), neg)
+   for pitem in pos_list:
+      if not (check_in_span(pitem,neg_list) if in_out == 'in' else check_in_span(neg_list[0],[pitem])):
+         if cc:
+            if int(pitem[1])-int(pitem[0]) == 1:
+               bucket_pos.append(pitem)
+            else:
+               bucket_pos.append(pitem)
+   return map(lambda x: '%s|%s'%(x[0],x[1]), bucket_pos)
+
+def display_span(cc_spans,how_spans,also_spans,so_spans,pos_argmdis_spans,pos_argmadv_spans,neg_prn_spans,neg_adjp_spans,pos_np_spans):
+   pass
+       
+def make_span(sent,pos,nps):
+   cc_spans = find_index(pos,'CC')
+   how_spans = find_index(sent,'however')
+   also_spans = find_index(sent,'also')
+   so_spans = find_index(sent,'so')
+   pos_argmdis_spans = find_spans(nps,'\(ARGM-DIS*')
+   pos_argmadv_spans = find_spans(nps,'\(ARGM-ADV*')
+   neg_prn_spans = find_spans(nps,'\(PRN\**\(NP')
+   #neg_advp_spans = find_spans(nps,'*(ADVP\*\*)*')
+   neg_adjp_spans = find_spans(nps,'\(*\(ADJP\*\*\)*')
+   pos_np_spans = find_spans(nps,'\(NP*')
+   display_span(cc_spans,how_spans,also_spans,so_spans,pos_argmdis_spans,pos_argmadv_spans,neg_prn_spans,neg_adjp_spans,pos_np_spans)
+   if 11 in nps.keys():
+      named_spans = find_single_spans(nps[11],'\(*\)')   
+   else: named_spans = []
+   if neg_prn_spans:
+      pos_argmdis_span = remove_spans(pos_argmdis_spans,neg_prn_spans,'in')
+   if cc_spans:
+      pos_argmdis_span = remove_spans(pos_argmdis_spans,cc_spans,'out',cc=True)
+   if neg_adjp_spans:
+      pos_argmadv_span = remove_spans(pos_argmadv_spans,neg_adjp_spans,'in')
+   if pos_argmdis_spans:
+      if pos_argmadv_spans:
+         all_pos_no_np = make_union([pos_argmdis_spans,pos_argmadv_spans])
+      else:
+         all_pos_no_np = pos_argmdis_spans
+   else:
+      if pos_argmadv_spans:
+         all_pos_no_np = pos_argmadv_spans
+      else:
+         all_pos_no_np = None
+   if pos_np_spans:
+      if all_pos_no_np:
+         if named_spans:
+            all_pos = make_intersection([all_pos_no_np, pos_np_spans, named_spans])
+         else:
+            all_pos = make_intersection([all_pos_no_np, pos_np_spans])
+      else:
+         if named_spans:
+            all_pos = male_intersection([pos_np_spans,named_spans])
+         else:
+            all_pos = pos_np_spans
+   else:
+      all_pos = []
+   return all_pos
+
+def check_nps(sent, pos, nps):
+   return make_span(sent,pos,nps)
                         
 def find_singletons(sent_dict):
-   pos_cluster = []
-   neg_cluster = []
-   for key in sent_dict.keys():
+   all_spans = {}
+   for key in sent_dict.keys(): # for every sentence
       nps = sent_dict[key].nps
       sent = sent_dict[key].sent
-      pos = sent_dict[key].pos
-      coref = max(nps.keys())
-      coref_spans = map(lambda x,y: '%s|%s'%(x,x+y), nps[coref][0],nps[coref][1])
-      for npkey in nps.keys():
-         # key:[words, span, brackets]
-         np_list = map(lambda x,y,z: [x,x+y,z], nps[npkey][0],nps[npkey][1],nps[npkey][2])
-         for np in np_list:
-            bracket = ''.join(np['np'])
-            prn = ''.join(np['prn'])
-            if pos_rules_check(pos[np[0]:np[1]]) or word_rules_check(sent[np[0]:np[1]]) or nps_rules_check(bracket,prn):
-               if '%s|%s'%(np[0],np[1]) in coref_spans:
-                  neg_cluster.append(bracket)           
-               else:
-                  pos_cluster.append(bracket)            
-   return pos_cluster, neg_cluster
+      pos = sent_dict[key].pos_tags
+      all_spans[key] = check_nps(sent, pos, nps)
+   return all_spans
 
-def copy_back(cluster, fname):
+def copy_back(cluster,sent_dict, fname):
    f = open(fname, 'w')
-   for item in cluster:
-      f.write('%s\n'%item)
+   for key in cluster.keys():
+      f.write('\n++++++++++sentence %s+++++++++++\n'%key)
+      sent = sent_dict[key].sent
+      sent_w = ' '.join(sent)
+      f.write("%s\n"%sent_w)
+      for item in cluster[key]:
+         cols = item.split('|')
+         f.write('%s|%s\t%s\n'%(cols[0], cols[1], ' '.join(sent[int(cols[0]):int(cols[1])]) ))
    f.close()
           
 def main():
    #"""
-   sent_out = open("sent_dict.pkl","rb")
+   sent_out = open("test_dict.pkl","rb")
    sent_dict = pickle.load(sent_out)
-   print sent_dict[sent_dict.keys()[100]].nps
-   pos,neg = find_singletons(sent_dict)
-   copy_back(pos,'pos_single.txt')
-   copy_back(neg,'neg_single.txt')
+   #print sent_dict[sent_dict.keys()[100]].nps
+   all_pos = find_singletons(sent_dict)
+   copy_back(all_pos,sent_dict,'singleton_test.txt')
 
 if __name__ == "__main__":
    main()

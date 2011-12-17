@@ -60,7 +60,7 @@ def search_tag(sent,search_tag,count_tag):
       ret_nps[1].append(span)
       ret_nps[2].append(sent[start:end])
       start = sent.find('%s'%search_tag,start+1) 
-   return ret_nps #contains [[#words_before],[#span],[diff_nps(largest_to_smallest]] per sentence
+   return ret_nps #contains [[#words_before],[#span],[diff_nps(largest_to_smallest)] per sentence
 
 #insert the tokens into the dictionary
 def insert_tokens(sent_feat,token, num):
@@ -115,7 +115,7 @@ def parse_sentences(lines):
           for key in sent_features.keys():
              if key < 5:
                 continue
-             elif key == 5 || key == 11:
+             elif key == 5 or key == 11:
                 ret_nps['np'] = search_tag(''.join(sent_features[5]),"(NP","*")
                 ret_nps['prn'] = search_tag(''.join(sent_features[5]),"(PRN","*")
                 ret_nps[11] = search_tag(''.join(sent_features[11]),"(","*")
@@ -133,8 +133,8 @@ def parse_sentences(lines):
           
 def main():
    #"""
-   data = open("../conll_st_Data/train/en_train_dev_gold.txt","rb")
-   sent_out = open("sent_dict.pkl","wb")
+   data = open("../conll_st_Data/test/en.finalCoNLL_test_gold.txt","rb")
+   sent_out = open("test_dict.pkl","wb")
    lines = iter(data.readlines())
    sent_features = ['','','']
    lines.next()
