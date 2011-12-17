@@ -88,9 +88,9 @@ def copy_back(cluster,sent_dict, fname):
       s = sent_dict[key].sent
       f.write('++++++%s++++++\n'%sent_dict[key].sent_number)
       f.write(' '.join(s))
-      for item in cluster[key]:
-         print item
-         f.write('%s\t%s|%s\n'%(' '.join( s[ int(item[0]) : int(item[1]) ] ), item[0], item[1] ))
+      for npkey in cluster[key].keys():
+         for item in cluster[key][npkey]:
+            f.write('%s\t%s|%s\n'%(' '.join( s[ int(item[0]) : int(item[1]) ] ), item[0], item[1] ))
    f.close()
 
 
