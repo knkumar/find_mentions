@@ -54,14 +54,13 @@ def find_classes(np_list, npkey, pos_cluster, neg_cluster,prior,mention):
          pos_prob = pos_prob*float(pos_cluster[np[2]])
       if np[2] in neg_cluster.keys():
          neg_prob = neg_prob*float(neg_cluster[np[2]])
-      if np[2] in prior.keys():
-         pos_prob = pos_prob*float(prior[np[2]])
-         neg_prob = neg_prob*float(prior[np[2]])
+      pos_prob = pos_prob*prior
+      neg_prob = neg_prob*prior
       if pos_prob > neg_prob:
          mention = insert(mention,npkey,[np[0],np[1]])
    return mention
          
-def find_nice_features(pos, neg,prior, sent_dict):
+def find_nice_features(pos, neg, prior, sent_dict):
    mention_span = {}
    for skey in sent_dict.keys():
       mention = {}
@@ -97,9 +96,10 @@ def copy_back(cluster,sent_dict, fname):
 def main():
    #"""
    sent_out = open("test_dict.pkl","rb")
+   pfile = open('prior.txt')
    pos = load('posterior_pos.txt')
    neg = load('posterior_neg.txt')
-   prior = load('prior.txt')
+   prior = float(pfile.readline())
    sent_dict = pickle.load(sent_out)
    mention_span = find_nice_features(pos,neg,prior,sent_dict)
    copy_back(mention_span,sent_dict,'mention_test.txt')
