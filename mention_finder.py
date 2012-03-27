@@ -8,6 +8,15 @@ Everest has become too common , and perhaps abit too commercial
 import re
 import pickle
 
+TRAIN = False
+
+if TRAIN:
+   data = open("../conll_st_Data/train/en_train_dev_gold.txt","rb")
+   sent_out = open("sent_dict.pkl","wb")
+else:
+   data = open("../conll_st_Data/test/en.finalCoNLL_test.txt","rb")
+   sent_out = open("test_dict.pkl","wb")
+
 class mention_frame:
    def __init__(self, number, sent, pos, bracket, nps_finder):
       self.sent_number = number
@@ -77,9 +86,9 @@ def extract_features(sent_features, tokens):
    sent_features = insert_tokens(sent_features, tokens[3], 3)
    sent_features = insert_tokens(sent_features, tokens[4], 4)
    sent_features = insert_tokens(sent_features, tokens[5], 5)
-   sent_features = insert_tokens(sent_features, tokens[11], 11)
-   if len(tokens) > 12:
-      for i in range(12,len(tokens)-1):
+   sent_features = insert_tokens(sent_features, tokens[10], 10)
+   if len(tokens) > 10:
+      for i in range(11,len(tokens)-1):
          sent_features = insert_tokens(sent_features, tokens[i], i)
    coref_col = len(tokens)-1
    sent_features = insert_tokens(sent_features, tokens[coref_col], coref_col)
@@ -113,12 +122,12 @@ def parse_sentences(lines):
        else:
           co_ref = max(sent_features.keys())
           for key in sent_features.keys():
-             if key < 5:
+             if key < 4:
                 continue
-             elif key == 5 or key == 11:
-                ret_nps['np'] = search_tag(''.join(sent_features[5]),"(NP","*")
-                ret_nps['prn'] = search_tag(''.join(sent_features[5]),"(PRN","*")
-                ret_nps[11] = search_tag(''.join(sent_features[11]),"(","*")
+             elif key == 5 or key == 10:
+                ret_nps[5] = search_tag(''.join(sent_features[5]),"(","*")
+                #ret_nps['prn'] = search_tag(''.join(sent_features[5]),"(PRN","*")
+                ret_nps[10] = search_tag(''.join(sent_features[10]),"(","*")
              elif key == co_ref:
                 ret_nps[key] = search_tag(''.join(sent_features[key]),"(","-")
              else:
@@ -133,13 +142,12 @@ def parse_sentences(lines):
           
 def main():
    #"""
-   data = open("../conll_st_Data/test/en.finalCoNLL_test_gold.txt","rb")
-   sent_out = open("test_dict.pkl","wb")
    lines = iter(data.readlines())
    sent_features = ['','','']
    lines.next()
    sent_dict = parse_sentences(lines) # contains parses for all the sentences
    #sent_num : {column_no : [[words],[spans],[nps|args]]}
+   print sent_dict[64]
    pickle.dump(sent_dict,sent_out)
    data.close()
    sent_out.close()

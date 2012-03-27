@@ -31,13 +31,15 @@ class mention_frame:
 
 def get_data(sent_dict,key):
    nps = sent_dict[key].nps
-   coref = max(nps.keys())
+   keys = map(lambda x: int(x), nps.keys())
+   coref = max(keys)
    sent = sent_dict[key].sent
    coref_spans = map(lambda x,y: '%s|%s'%(x,x+y), nps[coref][0],nps[coref][1])
    return nps, coref,sent, coref_spans
 
 
 def insert(cluster, key):
+   key = ''.join(key.split('*'))
    if key in cluster.keys():
       cluster[key] = cluster[key]+1
    else:
@@ -64,6 +66,7 @@ def find_nice_features(sent_dict):
    for key in sent_dict.keys():
       #cannot consider features to be independent
       nps,coref,sent,coref_spans = get_data(sent_dict,key)
+      #print '%s:'%coref
       for npkey in nps.keys():
          if npkey == "PRN":
             continue
@@ -82,7 +85,6 @@ def main():
    #"""
    sent_out = open("sent_dict.pkl","rb")
    sent_dict = pickle.load(sent_out)
-   print sent_dict[sent_dict.keys()[100]].nps
    pos,neg = find_nice_features(sent_dict)
    copy_back(pos,'pos.txt')
    copy_back(neg,'neg.txt')

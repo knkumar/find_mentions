@@ -1,10 +1,6 @@
 #L645 Final Project
 #Nov 28 2011
-#2 things - separate out verb coreference and noun phrases with coreference
-#this file - noun phrases with corteference
-"""['concern climbing
-Everest has become too common , and perhaps abit too commercial
-','(NP*(SBAR(S(S(VP*(NP*)))(VP*(VP*(ADJP(ADJP**)**(ADVP*)(ADJP(ADVP(NP**)*)*))))))))',10]"""
+
 import re
 import pickle
 
@@ -50,16 +46,23 @@ def find_classes(np_list, npkey, pos_cluster, neg_cluster,prior,mention):
    for np in np_list:
       pos_prob = 1.0
       neg_prob = 1.0
-      if np[2] in pos_cluster.keys():
-         pos_prob = pos_prob*float(pos_cluster[np[2]])
-      if np[2] in neg_cluster.keys():
-         neg_prob = neg_prob*float(neg_cluster[np[2]])
+      bracket = ''.join(np[2].split('*'))
+      if bracket in pos_cluster.keys():
+         pos_prob = pos_prob*float(pos_cluster[bracket])
+      if bracket in neg_cluster.keys():
+         neg_prob = neg_prob*float(neg_cluster[bracket])
       pos_prob = pos_prob*prior
-      neg_prob = neg_prob*prior
-      if pos_prob > neg_prob:
+      neg_prob = neg_prob*(1-prior)
+      if pos_prob >= neg_prob:
          mention = insert(mention,npkey,[np[0],np[1]])
    return mention
-         
+
+def add_named_entities(np_list, npkey, mention):
+   for np in np_list:
+      mention = insert(mention,npkey,[np[0],np[1]])
+   return mention
+   
+
 def find_nice_features(pos, neg, prior, sent_dict):
    mention_span = {}
    for skey in sent_dict.keys():
@@ -69,7 +72,10 @@ def find_nice_features(pos, neg, prior, sent_dict):
          if npkey == "PRN":
             continue
          np_list = map(lambda x,y,z: [x,x+y,z], nps[npkey][0],nps[npkey][1],nps[npkey][2])
-         mention_span[skey] = find_classes(np_list, npkey, pos,neg, prior, mention)
+         if npkey == 11:
+            mention_span[skey] = add_named_entities(np_list, npkey, mention)
+         else:
+            mention_span[skey] = find_classes(np_list, npkey, pos,neg, prior, mention)
    return mention_span
 
 def load(fname):
@@ -82,16 +88,17 @@ def load(fname):
 
 def copy_back(cluster,sent_dict, fname):
    f = open(fname, 'wb')
-   print cluster
    for key in cluster.keys():
       s = sent_dict[key].sent
-      f.write('++++++%s++++++\n'%sent_dict[key].sent_number)
-      f.write(' '.join(s))
+      f.write('\n++++++%s++++++\n'%sent_dict[key].sent_number)
+      f.write(' '.join(s)+"\n")
       for npkey in cluster[key].keys():
          for item in cluster[key][npkey]:
-            f.write('%s\t%s|%s\n'%(' '.join( s[ int(item[0]) : int(item[1]) ] ), item[0], item[1] ))
+            if item[0] == item[1]:
+               f.write('%s\t%s|%s\n'%(' '.join( s[ int(item[0]) : int(item[1])+1 ] ), item[0], item[1] ))
+            else:
+               f.write('%s\t%s|%s\n'%(' '.join( s[ int(item[0]) : int(item[1]) ] ), item[0], item[1] ))
    f.close()
-
 
 def main():
    #"""
@@ -102,7 +109,10 @@ def main():
    prior = float(pfile.readline())
    sent_dict = pickle.load(sent_out)
    mention_span = find_nice_features(pos,neg,prior,sent_dict)
-   copy_back(mention_span,sent_dict,'mention_test.txt')
+   #mention_span = {sent_num : {col_num : [[start],[end][]}}
+   final_out = open("result.pkl","wb")
+   pickle.dump(mention_span,final_out)
+   copy_back(mention_span,sent_dict,'mention_test_with_prior.txt')
 
 if __name__ == "__main__":
    main()

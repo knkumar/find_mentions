@@ -67,7 +67,7 @@ def copy_back(all_pos,coref_pos, fname):
           
 def main():
    #"""
-   sent_out = open("test_dict.pkl","rb")
+   sent_out = open("sent_dict.pkl","rb")
    sent_dict = pickle.load(sent_out)
    #print sent_dict[sent_dict.keys()[100]].nps
    all_pos, coref_pos = find_mentions(sent_dict)

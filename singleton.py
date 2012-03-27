@@ -165,8 +165,10 @@ def main():
    sent_out = open("test_dict.pkl","rb")
    sent_dict = pickle.load(sent_out)
    #print sent_dict[sent_dict.keys()[100]].nps
-   all_pos = find_singletons(sent_dict)
-   copy_back(all_pos,sent_dict,'singleton_test.txt')
+   all_spans = find_singletons(sent_dict)
+   span_out = open("singleton.pkl","wb")
+   pickle.dump(all_spans,span_out)
+   copy_back(all_spans,sent_dict,'singleton_test.txt')
 
 if __name__ == "__main__":
    main()
